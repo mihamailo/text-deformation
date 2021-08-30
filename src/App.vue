@@ -32,7 +32,7 @@ export default {
   setup() {
     const state = reactive({
       text: "Deformation result",
-      filter: "Зазеркалить",
+      filter: "Отзеркалить",
       textAlign: "text-center",
     });
     function array_compare(a, b) {
@@ -125,7 +125,7 @@ export default {
           stringItem = array.slice(prevId, id + 1).join(" ");
           prevId = id + 1;
           console.log(item);
-          if (countSym > 50) {
+          if (countSym > 70) {
             singleString += ` ${stringItem}`;
             newArray.push(backString(singleString));
             singleString = "";
@@ -167,7 +167,8 @@ export default {
         canvas
       ) {
         document.body.appendChild(canvas);
-        canvas.style.width = "100%";
+        canvas.style.width = "2500px";
+        canvas.style.height = "2500px";
         canvas.style.visibility = "hidden";
         canvas.style.position = "absolute";
         canvas.style.left = "-1000%";
@@ -175,7 +176,7 @@ export default {
         var pdf = new jsPDF({
           orientation: "l",
           unit: "px",
-          format: [canvas.width, canvas.height * 2],
+          format: [canvas.width, canvas.width],
         });
 
         pdf.addImage(imgData, "jpeg", 0, 0, canvas.width, canvas.height);
@@ -194,7 +195,7 @@ export default {
         return;
       }
       switch (state.filter) {
-        case "Зазеркалить":
+        case "Отзеркалить":
           return onMirrorText(value);
         case "Перемешать":
           return onShuffelText(value);
@@ -232,9 +233,9 @@ export default {
 }
 .result {
   min-height: 60vh;
-  font-size: 18px;
+  font-size: 24px;
 }
 .container {
-  max-width: 800px;
+  max-width: 1300px;
 }
 </style>
