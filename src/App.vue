@@ -21,7 +21,6 @@ import Input from "./components/Input";
 import Filter from "./components/Filter";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import Canvg from "canvg";
 
 export default {
   name: "App",
@@ -181,11 +180,6 @@ export default {
 
         pdf.addImage(imgData, "jpeg", 0, 0, canvas.width, canvas.height);
         pdf.save("download.pdf");
-
-        const ctx = canvas.getContext("2d");
-        const v = Canvg.from(ctx, "./svgs/1.svg");
-        // Start SVG rendering with animations and mouse handling.
-        v.start();
       });
     });
 
