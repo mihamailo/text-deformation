@@ -21,6 +21,7 @@ import Input from "./components/Input";
 import Filter from "./components/Filter";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import Canvg from "canvg";
 
 export default {
   name: "App",
@@ -124,7 +125,7 @@ export default {
           stringItem = array.slice(prevId, id + 1).join(" ");
           prevId = id + 1;
           console.log(item);
-          if (countSym > 120) {
+          if (countSym > 50) {
             singleString += ` ${stringItem}`;
             newArray.push(backString(singleString));
             singleString = "";
@@ -166,8 +167,7 @@ export default {
         canvas
       ) {
         document.body.appendChild(canvas);
-        canvas.style.width = "100vw";
-        canvas.style.width = "2500px";
+        canvas.style.width = "100%";
         canvas.style.visibility = "hidden";
         canvas.style.position = "absolute";
         canvas.style.left = "-1000%";
@@ -180,6 +180,11 @@ export default {
 
         pdf.addImage(imgData, "jpeg", 0, 0, canvas.width, canvas.height);
         pdf.save("download.pdf");
+
+        const ctx = canvas.getContext("2d");
+        const v = Canvg.from(ctx, "./svgs/1.svg");
+        // Start SVG rendering with animations and mouse handling.
+        v.start();
       });
     });
 
@@ -228,5 +233,8 @@ export default {
 .result {
   min-height: 60vh;
   font-size: 18px;
+}
+.container {
+  max-width: 800px;
 }
 </style>
