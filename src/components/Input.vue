@@ -9,7 +9,7 @@
         rows="8"
       />
       <button @click="setText(inputValue)" class="btn btn-primary">
-        Deformation it
+        Деформировать
       </button>
     </div>
   </div>
@@ -29,5 +29,6 @@ button {
   position: absolute;
   left: 15px;
   bottom: 15px;
+  opacity: 0.8;
 }
 </style>

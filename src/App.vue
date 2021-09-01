@@ -1,14 +1,29 @@
 <template>
   <div class="container">
-    <Filter :filter="state.filter" :filterChange="filterChange" />
+    <div class="mb-3 d-flex justify-content-between">
+      <Filter
+        :filter="state.filter"
+        :filterChange="filterChange"
+        :buttons="state.buttons"
+      />
+      <button @click="downloadPdf" class="btn btn-success mt-2">Скачать</button>
+    </div>
     <div class="result card">
-      <div class="card-body" :class="state.textAlign">
+      <div class="result__body card-body" :class="state.textAlign">
         <div v-if="typeof state.text === 'object'">
           <div v-for="(item, index) in state.text" v-bind:key="index">
             {{ item }}
           </div>
         </div>
+
         <div v-else>{{ state.text }}</div>
+
+        <div
+          id="randomResult"
+          v-bind:class="
+            state.filter === 'Случайные буквы' ? 'd-block' : 'd-none'
+          "
+        ></div>
       </div>
     </div>
     <Input :setText="setText" />
@@ -16,7 +31,7 @@
 </template>
 
 <script>
-import { reactive, onMounted, onUpdated } from "vue";
+import { reactive } from "vue";
 import Input from "./components/Input";
 import Filter from "./components/Filter";
 import html2canvas from "html2canvas";
@@ -30,10 +45,12 @@ export default {
   },
   setup() {
     const state = reactive({
-      text: "Deformation result",
-      filter: "Отзеркалить",
+      text: "Результат деформации",
+      filter: "Безпробелов",
       textAlign: "text-center",
+      buttons: ["Перемешать", "Отзеркалить", "Случайные буквы", "Безпробелов"],
     });
+
     function array_compare(a, b) {
       // if lengths are different, arrays aren't equal
       if (a.length != b.length) return false;
@@ -106,6 +123,8 @@ export default {
         var last = aString.length - 1;
         var res = new Array(aString.length);
         for (var i = last; i >= 0; --i) {
+          if (res[i] === ")") res[i] = "(";
+          else if (res[i] === "(") res[i] = ")";
           var c = aString.charAt(i);
           res[last - i] = c;
         }
@@ -123,8 +142,11 @@ export default {
         array.map((item, id) => {
           stringItem = array.slice(prevId, id + 1).join(" ");
           prevId = id + 1;
-          console.log(item);
-          if (countSym > 70) {
+
+          let spaceCount = stringItem.length + 1;
+          console.log(spaceCount);
+          if (countSym > 75 - spaceCount) {
+            // Можно отнять количество элементов строки( = количеству пробелов)
             singleString += ` ${stringItem}`;
             newArray.push(backString(singleString));
             singleString = "";
@@ -134,16 +156,52 @@ export default {
             countSym += item.length;
           }
         });
-        console.log(newArray);
         // here we load string that have less than 50 symbols
         newArray.push(backString(singleString));
 
-        // console.log(newContent);
         return newArray;
       }
 
       const text = reverseStrings(value);
       return text;
+    };
+
+    const randomLetter = (value) => {
+      const arrStrings = value.split(" ");
+
+      function str_rand() {
+        var result = "";
+        var words = "йцукенгшщзхъфывапролджэячсмитьбю";
+        var max_position = words.length - 1;
+        for (let i = 0; i < 1; ++i) {
+          let position = Math.floor(Math.random() * max_position);
+          result = result + words.substring(position, position + 1);
+        }
+        return result;
+      }
+
+      const newArray = arrStrings.map((word, id, arr) => {
+        const letters = word.split("");
+
+        let letterArray = [];
+        for (let i = 0; i < letters.length; i++) {
+          letterArray.push(letters[i]);
+          if (letters[i + 1] != undefined) {
+            letterArray.push(`<span>${str_rand()}</span>`);
+          }
+        }
+        return letterArray.join("");
+      });
+
+      const newText = newArray.join(" ");
+
+      return newText;
+    };
+
+    const spaceless = (value) => {
+      let newText = value.replace(/\s/g, "");
+
+      return newText;
     };
 
     const onShuffelText = (value) => {
@@ -156,18 +214,30 @@ export default {
       state.textAlign = "text-end";
     };
 
+    const onRandomLetter = (value) => {
+      state.textAlign = "text-start";
+      state.text = randomLetter("");
+      document.querySelector("#randomResult").innerHTML = randomLetter(value);
+    };
+
+    const onSpaceless = (value) => {
+      state.textAlign = "text-start";
+      state.text = spaceless(value);
+    };
+
     const onDefault = (value) => {
       state.text = value;
       state.textAlign = "text-center";
     };
 
-    onUpdated(() => {
-      html2canvas(document.querySelector(".result .card-body")).then(function (
+    const downloadPdf = () => {
+      html2canvas(document.querySelector(".result__body")).then(function (
         canvas
       ) {
         document.body.appendChild(canvas);
-        canvas.style.width = "2500px";
-        canvas.style.height = "2500px";
+        console.log("kjk");
+        canvas.style.width = "3000px";
+        canvas.style.height = "3000px";
         canvas.style.visibility = "hidden";
         canvas.style.position = "absolute";
         canvas.style.left = "-1000%";
@@ -181,11 +251,11 @@ export default {
         pdf.addImage(imgData, "jpeg", 0, 0, canvas.width, canvas.height);
         pdf.save("download.pdf");
       });
-    });
+    };
 
     const setText = (value) => {
       if (value === null || value === "") {
-        onDefault("Deformation result");
+        onDefault("Результат деформации");
         return;
       }
       switch (state.filter) {
@@ -193,6 +263,10 @@ export default {
           return onMirrorText(value);
         case "Перемешать":
           return onShuffelText(value);
+        case "Случайные буквы":
+          return onRandomLetter(value);
+        case "Безпробелов":
+          return onSpaceless(value);
         default:
           return onDefault;
       }
@@ -201,6 +275,7 @@ export default {
     const filterChange = (type) => {
       state.filter = type;
       const inputValue = document.querySelector("textarea").value;
+
       if (!inputValue) {
         return;
       }
@@ -211,6 +286,7 @@ export default {
       state,
       setText,
       filterChange,
+      downloadPdf,
     };
   },
 };
@@ -228,7 +304,20 @@ export default {
 .result {
   min-height: 60vh;
   font-size: 24px;
+  background-size: 150px;
+  position: relative;
+  &__img {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 180px;
+  }
 }
+
+#randomResult span {
+  opacity: 0.6;
+}
+
 .container {
   max-width: 1300px;
 }
