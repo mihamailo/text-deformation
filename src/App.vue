@@ -11,7 +11,11 @@
     <div class="result card">
       <div class="result__body card-body" :class="state.textAlign">
         <div v-if="typeof state.text === 'object'">
-          <div v-for="(item, index) in state.text" v-bind:key="index">
+          <div
+            v-for="(item, index) in state.text"
+            v-bind:key="index"
+            :class="state.hiddenSide"
+          >
             {{ item }}
           </div>
         </div>
@@ -48,7 +52,15 @@ export default {
       text: "Результат деформации",
       filter: "Безпробелов",
       textAlign: "text-center",
-      buttons: ["Перемешать", "Отзеркалить", "Случайные буквы", "Безпробелов"],
+      buttons: [
+        "Перемешать",
+        "Отзеркалить",
+        "Случайные буквы",
+        "Безпробелов",
+        "Перекрыто сверху",
+        "Перекрыто снизу",
+      ],
+      hiddenSide: "",
     });
 
     function array_compare(a, b) {
@@ -136,7 +148,6 @@ export default {
         let countSym = 0;
         let newArray = [];
         let prevId = 0;
-        let textLength = text.replace(/\s/g, "").length;
         let singleString = "";
         let stringItem;
         array.map((item, id) => {
@@ -204,6 +215,32 @@ export default {
       return newText;
     };
 
+    const getStrings = (value) => {
+      let array = value.split(" ");
+      let countSym = 0;
+      let newArray = [];
+      let prevId = 0;
+      let singleString = "";
+      let stringItem;
+      array.map((item, id) => {
+        stringItem = array.slice(prevId, id + 1).join(" ");
+        prevId = id + 1;
+
+        let spaceCount = stringItem.length + 1;
+        if (countSym > 75 - spaceCount) {
+          singleString += ` ${stringItem}`;
+          newArray.push(singleString);
+          singleString = "";
+          countSym = 0;
+        } else {
+          singleString += ` ${stringItem}`;
+          countSym += item.length;
+        }
+      });
+      newArray.push(singleString);
+      return newArray;
+    };
+
     const onShuffelText = (value) => {
       state.text = shuffelText(value);
       state.textAlign = "text-start";
@@ -225,6 +262,16 @@ export default {
       state.text = spaceless(value);
     };
 
+    const onTopHide = (value) => {
+      state.textAlign = "text-start";
+      state.text = getStrings(value);
+    };
+
+    const onBottomHide = (value) => {
+      state.textAlign = "text-start";
+      state.text = getStrings(value);
+    };
+
     const onDefault = (value) => {
       state.text = value;
       state.textAlign = "text-center";
@@ -235,7 +282,6 @@ export default {
         canvas
       ) {
         document.body.appendChild(canvas);
-        console.log("kjk");
         canvas.style.width = "3000px";
         canvas.style.height = "3000px";
         canvas.style.visibility = "hidden";
@@ -267,6 +313,10 @@ export default {
           return onRandomLetter(value);
         case "Безпробелов":
           return onSpaceless(value);
+        case "Перекрыто сверху":
+          return onTopHide(value);
+        case "Перекрыто снизу":
+          return onBottomHide(value);
         default:
           return onDefault;
       }
@@ -289,16 +339,28 @@ export default {
       downloadPdf,
     };
   },
+  beforeUpdate() {
+    const { state } = this;
+    console.log(state.hiddenSide);
+    switch (state.filter) {
+      case "Перекрыто сверху":
+        return (state.hiddenSide = "top-hidden");
+      case "Перекрыто снизу":
+        return (state.hiddenSide = "bottom-hidden");
+      default:
+        return (state.hiddenSide = "");
+    }
+  },
 };
 </script>
 
 <style lang="scss">
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Jost", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #000;
   padding-top: 20px;
 }
 .result {
@@ -320,5 +382,30 @@ export default {
 
 .container {
   max-width: 1300px;
+}
+
+.top-hidden {
+  position: relative;
+  &:after {
+    content: "";
+    background: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 44%;
+  }
+}
+.bottom-hidden {
+  position: relative;
+  &:after {
+    content: "";
+    background: #fff;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 44%;
+  }
 }
 </style>
